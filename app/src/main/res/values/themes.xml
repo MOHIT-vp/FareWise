@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+      Base app theme. Compose paints everything; this theme only supplies
+      the window background so the frame before Compose's first draw
+      matches the light / dark surface instead of flashing white.
+    -->
+    <style name="Theme.FareWise" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+
+    <!--
+      Launch theme. The AndroidX SplashScreen library backports the
+      Android 12 splash API, so the same brand icon on indigo is shown on
+      every API level the app supports, then hands off to Theme.FareWise.
+    -->
+    <style name="Theme.FareWise.SplashScreen" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/brand_indigo</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.FareWise</item>
+    </style>
+</resources>

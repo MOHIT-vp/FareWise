@@ -1,0 +1,12 @@
+# Copy this file to local.properties and fill in your own values.
+# local.properties is git-ignored, so your keys never reach the repo.
+
+# Path to your Android SDK (Android Studio usually writes this for you).
+sdk.dir=/Users/<you>/Library/Android/sdk
+
+# Google Maps key — enable "Maps SDK for Android" and "Routes API" on it.
+# Without it the app still runs, using estimated routes and prices.
+GOOGLE_MAPS_API_KEY=your-google-maps-key
+
+# Optional: OpenWeatherMap key for the weather-aware surge model.
+OPEN_WEATHER_API_KEY=

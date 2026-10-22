@@ -1,0 +1,56 @@
+{
+  "input_shape": [
+    1,
+    24,
+    7
+  ],
+  "output_shape": [
+    1,
+    6
+  ],
+  "window": 24,
+  "horizon": 6,
+  "features": 7,
+  "step_minutes": 5,
+  "price_mean": 331.80377197265625,
+  "price_std": 137.8484649658203,
+  "feature_order": [
+    "price_normalised",
+    "hour_sin",
+    "hour_cos",
+    "temp_c",
+    "precip_mm",
+    "wind_kmh",
+    "visibility_km"
+  ],
+  "weather_source": "synthetic:bengaluru-priors",
+  "provenance": {
+    "from_scratch": true,
+    "pretrained_checkpoint": null,
+    "random_seed": 42,
+    "weight_init": {
+      "dense_kernels": "glorot_uniform (Keras default)",
+      "lstm_recurrent": "orthogonal (Keras default)",
+      "biases": "zeros (Keras default)"
+    },
+    "country_scope": "India"
+  },
+  "weather_norm": {
+    "temp_c": {
+      "mean": 24.103042602539062,
+      "std": 4.48109245300293
+    },
+    "precip_mm": {
+      "mean": 3.4546403884887695,
+      "std": 4.137180328369141
+    },
+    "wind_kmh": {
+      "mean": 8.956624984741211,
+      "std": 3.9664947986602783
+    },
+    "visibility_km": {
+      "mean": 8.496935844421387,
+      "std": 1.5036718845367432
+    }
+  }
+}

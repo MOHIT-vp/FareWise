@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- FareWise brand indigo — mirrors BrandIndigo in ui/theme/Color.kt. -->
+    <color name="brand_indigo">#FF4B4BF0</color>
+
+    <!-- Window background shown before Compose draws its first frame.
+         Matches Surface0Light / Surface0Dark so there's no flash. -->
+    <color name="window_background">#FFF7F7FB</color>
+</resources>

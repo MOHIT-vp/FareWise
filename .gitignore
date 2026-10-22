@@ -1,0 +1,29 @@
+# --- Android / Gradle ---
+.gradle/
+.kotlin/
+build/
+/captures
+.externalNativeBuild
+.cxx
+*.apk
+*.aab
+
+# Machine-specific config + secrets (API keys live here — never commit)
+local.properties
+
+# --- IDEs ---
+.idea/
+*.iml
+.vscode/
+.claude/
+
+# --- Python (ml_model) ---
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# --- OS ---
+.DS_Store
+Thumbs.db

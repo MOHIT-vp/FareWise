@@ -1,0 +1,11 @@
+numpy>=1.26,<2.2
+pandas>=2.1
+tensorflow==2.16.2
+# kagglehub is used by both training scripts to auto-download the Indian
+# datasets (Uber India bookings + Indian Weather Repository). The scripts
+# fall back to a CATALOG-tuned synthetic generator if kagglehub is missing
+# or the user hasn't configured Kaggle API credentials.
+kagglehub>=0.3
+# matplotlib drives generate_figures.py — produces the surge prediction
+# vs. ground truth plot and the dashboard mockup.
+matplotlib>=3.7
