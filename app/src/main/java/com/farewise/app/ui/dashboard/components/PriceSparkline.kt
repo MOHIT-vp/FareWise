@@ -1,18 +1,25 @@
 package com.farewise.app.ui.dashboard.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathMeasure
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.farewise.app.ui.theme.DropGreen
+import com.farewise.app.ui.theme.Motion
 import com.farewise.app.ui.theme.SurgeRed
 
 /**
@@ -32,10 +39,19 @@ import com.farewise.app.ui.theme.SurgeRed
 @Composable
 fun PriceSparkline(
     prices: List<Double>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Trace the line left-to-right on first appearance. */
+    animateIn: Boolean = false
 ) {
     // Need at least two points to draw a line at all.
     if (prices.size < 2) return
+
+    val reveal = remember { Animatable(if (animateIn) 0f else 1f) }
+    LaunchedEffect(Unit) {
+        if (reveal.value < 1f) {
+            reveal.animateTo(1f, tween(SPARKLINE_DRAW_MS, easing = Motion.EaseOut))
+        }
+    }
 
     val minValue = prices.min()
     val maxValue = prices.max()
@@ -82,14 +98,26 @@ fun PriceSparkline(
         area.lineTo(w, h)
         area.close()
 
-        drawPath(area, brush = fill)
-        drawPath(line, color = color, style = Stroke(width = STROKE_PX))
-        // Dot the latest price so it pops at this scale.
-        drawCircle(
-            color = color,
-            radius = DOT_RADIUS_PX,
-            center = lastPoint(prices, stepX, h, minValue, range)
-        )
+        val progress = reveal.value
+        drawPath(area, brush = fill, alpha = progress)
+        if (progress < 1f) {
+            val measure = PathMeasure().apply { setPath(line, false) }
+            val partial = Path()
+            measure.getSegment(0f, measure.length * progress, partial, true)
+            drawPath(
+                partial,
+                color = color,
+                style = Stroke(width = STROKE_PX, cap = StrokeCap.Round)
+            )
+        } else {
+            drawPath(line, color = color, style = Stroke(width = STROKE_PX, cap = StrokeCap.Round))
+            // Dot the latest price so it pops at this scale.
+            drawCircle(
+                color = color,
+                radius = DOT_RADIUS_PX,
+                center = lastPoint(prices, stepX, h, minValue, range)
+            )
+        }
     }
 }
 
@@ -107,6 +135,7 @@ private fun lastPoint(
     return Offset(x, y)
 }
 
+private const val SPARKLINE_DRAW_MS = 700
 private const val TREND_THRESHOLD = 0.05  // 5% over the visible window
 private const val STROKE_PX = 2.2f
 private const val DOT_RADIUS_PX = 3.0f

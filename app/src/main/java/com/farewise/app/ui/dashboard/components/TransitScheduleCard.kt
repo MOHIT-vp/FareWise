@@ -13,12 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Subway
 import androidx.compose.material.icons.filled.Train
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import com.farewise.app.domain.model.TransitMode
 import com.farewise.app.domain.model.TransitSchedule
 import com.farewise.app.ui.common.Formatters
+import com.farewise.app.ui.theme.pressable
+import com.farewise.app.ui.theme.softCard
 
 /**
  * Transit departure card — sits alongside ride cards so the rider can compare
@@ -44,19 +44,16 @@ fun TransitScheduleCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .pressable(onClick = onClick)
+            .softCard()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             ModeAvatar(schedule.mode)

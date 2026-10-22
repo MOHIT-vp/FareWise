@@ -5,10 +5,11 @@
 FareWise is an Android app for Bengaluru commuters. It puts Uber, Ola and Rapido quotes next to Metro, BMTC bus and suburban rail options. Two on-device machine-learning models forecast where surge prices are heading. When a big drop is coming, the app tells you to wait; when prices are about to climb, it tells you to book now.
 
 <p align="center">
-  <img src="docs/screenshots/dashboard.png" width="220" alt="Dashboard" />
-  <img src="docs/screenshots/transit-sheet.png" width="220" alt="Transit details" />
-  <img src="docs/screenshots/full-map.png" width="220" alt="Full-screen map" />
-  <img src="docs/screenshots/dark-mode.png" width="220" alt="Dark mode" />
+  <img src="docs/screenshots/dashboard.png" width="200" alt="Dashboard" />
+  <img src="docs/screenshots/collapsed-title.png" width="200" alt="Collapsed title on scroll" />
+  <img src="docs/screenshots/transit-sheet.png" width="200" alt="Transit details" />
+  <img src="docs/screenshots/trip-journal.png" width="200" alt="Trip journal" />
+  <img src="docs/screenshots/dark-mode.png" width="200" alt="Dark mode" />
 </p>
 
 ## Features
@@ -20,6 +21,7 @@ FareWise is an Android app for Bengaluru commuters. It puts Uber, Ola and Rapido
 - **Multimodal combos.** Metro or bus plus a last-mile ride, when that combination beats a cab.
 - **One-tap booking.** Deep links open the partner app with pickup and drop already filled in, or the Play Store if the app isn't installed.
 - **Trip journal.** Monthly spend, surge premium paid, and money saved by following the advice.
+- **Crafted motion.** Cards scale on press with haptics, the segmented control's thumb slides on a spring, prices roll digit by digit (tinted red or green by direction), the large title collapses iOS-style, and lists cascade in on first load. Custom easing curves keep all of this under 300 ms.
 - Pull-to-refresh, loading skeletons, a full-screen map, transit detail sheets with Google Maps hand-off, and light and dark themes.
 
 ## Tech stack

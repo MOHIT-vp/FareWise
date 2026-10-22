@@ -21,8 +21,6 @@ import androidx.compose.material.icons.filled.DirectionsTransit
 import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.Train
 import androidx.compose.material.icons.filled.TwoWheeler
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -38,8 +36,10 @@ import androidx.compose.ui.unit.dp
 import com.farewise.app.domain.model.MultimodalCombo
 import com.farewise.app.domain.model.TransitMode
 import com.farewise.app.ui.common.Formatters
+import com.farewise.app.ui.theme.CardShape
 import com.farewise.app.ui.theme.DropGreen
 import com.farewise.app.ui.theme.RapidoYellow
+import com.farewise.app.ui.theme.softCard
 
 /**
  * "Combo" card — transit + last-mile ride pair, presented as one bookable
@@ -61,21 +61,13 @@ fun MultimodalComboCard(
     combo: MultimodalCombo,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .border(
-                width = 1.dp,
-                color = DropGreen.copy(alpha = 0.45f),
-                shape = RoundedCornerShape(18.dp)
-            ),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .softCard()
+            .border(1.dp, DropGreen.copy(alpha = 0.45f), CardShape)
     ) {
-        Column(Modifier.padding(14.dp)) {
+        Column(Modifier.padding(16.dp)) {
             SavingsHeader(combo.savingsVsDirectInr)
             Spacer(Modifier.height(10.dp))
             LegRow(combo)

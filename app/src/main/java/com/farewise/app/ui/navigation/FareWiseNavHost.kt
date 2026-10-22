@@ -3,6 +3,7 @@ package com.farewise.app.ui.navigation
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.WindowInsets
@@ -34,6 +35,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.farewise.app.ui.dashboard.DashboardScreen
 import com.farewise.app.ui.journal.TripJournalScreen
+import com.farewise.app.ui.theme.Motion
 
 /**
  * Top-level navigation graph.
@@ -79,8 +81,8 @@ fun FareWiseNavHost(
         bottomBar = {
             AnimatedVisibility(
                 visible = showBottomBar,
-                enter = slideInVertically { it } + fadeIn(),
-                exit = slideOutVertically { it } + fadeOut()
+                enter = slideInVertically(Motion.enter()) { it } + fadeIn(Motion.enter()),
+                exit = slideOutVertically(Motion.exit()) { it } + fadeOut(Motion.exit())
             ) {
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                     TABS.forEach { tab ->
@@ -109,7 +111,17 @@ fun FareWiseNavHost(
         NavHost(
             navController = navController,
             startDestination = startDestination,
-            modifier = Modifier.padding(padding)
+            modifier = Modifier.padding(padding),
+            // Navigation's default is a 700 ms fade — far too slow for tab
+            // switches. Quick crossfade with a hint of scale; exit is faster.
+            enterTransition = {
+                fadeIn(Motion.enter(220)) + scaleIn(Motion.enter(220), initialScale = 0.985f)
+            },
+            exitTransition = { fadeOut(Motion.exit(150)) },
+            popEnterTransition = {
+                fadeIn(Motion.enter(220)) + scaleIn(Motion.enter(220), initialScale = 0.985f)
+            },
+            popExitTransition = { fadeOut(Motion.exit(150)) }
         ) {
             composable(FareWiseDestinations.DASHBOARD) {
                 DashboardScreen(onImmersiveChange = { dashboardImmersive = it })

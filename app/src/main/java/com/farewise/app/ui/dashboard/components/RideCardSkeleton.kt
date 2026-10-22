@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.farewise.app.ui.theme.softCard
 
 /**
  * Placeholder shown in place of [RideOptionCard] while the first quotes are
@@ -58,10 +59,9 @@ fun RideCardSkeleton(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(MaterialTheme.colorScheme.surface)
+            .softCard()
             .semantics { contentDescription = "Loading ride option" }
-            .padding(14.dp)
+            .padding(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Block(brush, 44.dp, 44.dp, RoundedCornerShape(14.dp))

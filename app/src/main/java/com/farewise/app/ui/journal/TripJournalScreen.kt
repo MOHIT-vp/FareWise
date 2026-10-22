@@ -1,13 +1,21 @@
 package com.farewise.app.ui.journal
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,6 +25,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
@@ -30,24 +39,40 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.farewise.app.domain.model.Booking
 import com.farewise.app.domain.model.MonthlyInsights
 import com.farewise.app.domain.model.RideAdvice
 import com.farewise.app.domain.model.RideProvider
 import com.farewise.app.ui.common.Formatters
+import com.farewise.app.ui.theme.BrandIndigo
+import com.farewise.app.ui.theme.BrandIndigoDark
+import com.farewise.app.ui.theme.CardShape
 import com.farewise.app.ui.theme.DropGreen
+import com.farewise.app.ui.theme.Motion
 import com.farewise.app.ui.theme.OlaYellow
 import com.farewise.app.ui.theme.RapidoYellow
 import com.farewise.app.ui.theme.SurgeRed
+import com.farewise.app.ui.theme.TABULAR_NUMBERS
 import com.farewise.app.ui.theme.UberBlack
+import com.farewise.app.ui.theme.pressable
+import com.farewise.app.ui.theme.staggeredReveal
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
@@ -78,7 +103,7 @@ fun TripJournalScreen(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             JournalTopBar(
-                title = formatMonth(state.month),
+                month = state.month,
                 onPrev = viewModel::onPreviousMonth,
                 onNext = viewModel::onNextMonth
             )
@@ -95,7 +120,7 @@ fun TripJournalScreen(
 
 @Composable
 private fun JournalTopBar(
-    title: String,
+    month: YearMonth,
     onPrev: () -> Unit,
     onNext: () -> Unit
 ) {
@@ -114,24 +139,46 @@ private fun JournalTopBar(
             Column(Modifier.weight(1f)) {
                 Text(
                     "My trips",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
+                    style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                Text(
-                    title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                // The month slides in from the side you navigated towards.
+                AnimatedContent(
+                    targetState = month,
+                    transitionSpec = {
+                        val forward = targetState > initialState
+                        val dir = if (forward) 1 else -1
+                        (slideInHorizontally(Motion.enter()) { w -> dir * w / 3 } +
+                            fadeIn(Motion.enter())) togetherWith
+                            (slideOutHorizontally(Motion.exit()) { w -> -dir * w / 3 } +
+                                fadeOut(Motion.exit(120)))
+                    },
+                    label = "month"
+                ) { shown ->
+                    Text(
+                        formatMonth(shown),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
-            IconButton(onClick = onPrev) {
-                Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous month")
-            }
-            IconButton(onClick = onNext) {
-                Icon(Icons.Filled.ChevronRight, contentDescription = "Next month")
-            }
+            MonthButton(Icons.Filled.ChevronLeft, "Previous month", onPrev)
+            MonthButton(Icons.Filled.ChevronRight, "Next month", onNext)
         }
+    }
+}
+
+@Composable
+private fun MonthButton(icon: ImageVector, description: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .pressable(pressedScale = 0.88f, haptic = HapticFeedbackType.SegmentTick, onClick = onClick)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(icon, contentDescription = description, tint = MaterialTheme.colorScheme.onSurface)
     }
 }
 
@@ -140,6 +187,8 @@ private fun JournalContent(
     state: TripJournalUiState,
     contentPadding: PaddingValues
 ) {
+    // Sections that already played their entrance (see staggeredReveal).
+    val revealed = remember { HashSet<String>() }
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -147,15 +196,31 @@ private fun JournalContent(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item { SpendHeroCard(state.insights) }
-        item { StatsRow(state.insights) }
+        item(key = "hero") {
+            Box(Modifier.staggeredReveal(remember { revealed.add("hero") }, 0)) {
+                SpendHeroCard(state.insights)
+            }
+        }
+        item(key = "stats") {
+            Box(Modifier.staggeredReveal(remember { revealed.add("stats") }, 1)) {
+                StatsRow(state.insights)
+            }
+        }
 
         if (state.insights.byProvider.isNotEmpty()) {
-            item { ProviderBreakdownCard(state.insights.byProvider) }
+            item(key = "providers") {
+                Box(Modifier.animateItem().staggeredReveal(remember { revealed.add("providers") }, 2)) {
+                    ProviderBreakdownCard(state.insights.byProvider)
+                }
+            }
         }
 
         state.insights.mostExpensiveTrip?.let { trip ->
-            item { MostExpensiveCallout(trip) }
+            item(key = "priciest") {
+                Box(Modifier.animateItem().staggeredReveal(remember { revealed.add("priciest") }, 3)) {
+                    MostExpensiveCallout(trip)
+                }
+            }
         }
 
         if (state.bookings.isNotEmpty()) {
@@ -170,10 +235,14 @@ private fun JournalContent(
                 )
             }
             items(state.bookings, key = { it.id }) { booking ->
-                BookingRow(booking)
+                Box(Modifier.animateItem()) { BookingRow(booking) }
             }
         } else if (!state.isLoading) {
-            item { EmptyMonthCard() }
+            item(key = "empty") {
+                Box(Modifier.animateItem().staggeredReveal(remember { revealed.add("empty") }, 2)) {
+                    EmptyMonthCard()
+                }
+            }
         }
 
         item { Spacer(Modifier.height(24.dp)) }
@@ -182,36 +251,54 @@ private fun JournalContent(
 
 @Composable
 private fun SpendHeroCard(insights: MonthlyInsights) {
-    Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        modifier = Modifier.fillMaxWidth()
+    // Count up to the month's total — shown once per visit, so a little
+    // delight is affordable here.
+    val total = remember { Animatable(0f) }
+    LaunchedEffect(insights.totalSpentInr) {
+        total.animateTo(
+            insights.totalSpentInr.toFloat(),
+            tween(COUNT_UP_MS, easing = Motion.EaseOut)
+        )
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 18.dp,
+                shape = CardShape,
+                ambientColor = BrandIndigo.copy(alpha = 0.25f),
+                spotColor = BrandIndigo.copy(alpha = 0.35f)
+            )
+            .clip(CardShape)
+            .background(Brush.linearGradient(listOf(BrandIndigo, BrandIndigoDark, Color(0xFF2A1F8F))))
     ) {
-        Column(Modifier.padding(20.dp)) {
+        Column(Modifier.padding(22.dp)) {
             Text(
                 "You spent",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = Color.White.copy(alpha = 0.8f)
             )
             Text(
-                Formatters.inr(insights.totalSpentInr),
+                Formatters.inr(total.value.toDouble()),
                 style = MaterialTheme.typography.displaySmall.copy(
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-1).sp,
+                    fontFeatureSettings = TABULAR_NUMBERS
                 ),
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = Color.White
             )
             Spacer(Modifier.height(4.dp))
             Text(
                 "across ${insights.tripCount} ${if (insights.tripCount == 1) "trip" else "trips"} " +
                     if (insights.tripCount > 0) "(avg ${Formatters.inr(insights.averageFareInr)})" else "",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = Color.White.copy(alpha = 0.8f)
             )
         }
     }
 }
+
+private const val COUNT_UP_MS = 900
 
 @Composable
 private fun StatsRow(insights: MonthlyInsights) {

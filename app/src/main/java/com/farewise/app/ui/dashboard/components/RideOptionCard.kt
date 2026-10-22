@@ -1,5 +1,12 @@
 package com.farewise.app.ui.dashboard.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -14,20 +21,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.GetApp
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.TwoWheeler
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,12 +45,17 @@ import androidx.compose.ui.unit.dp
 import com.farewise.app.domain.model.RideOption
 import com.farewise.app.domain.model.RideProvider
 import com.farewise.app.ui.common.Formatters
+import com.farewise.app.ui.common.RollingPrice
+import com.farewise.app.ui.theme.CardShape
 import com.farewise.app.ui.theme.DropGreen
+import com.farewise.app.ui.theme.Motion
 import com.farewise.app.ui.theme.OlaYellow
 import com.farewise.app.ui.theme.RapidoYellow
 import com.farewise.app.ui.theme.SurgeAmber
 import com.farewise.app.ui.theme.SurgeRed
 import com.farewise.app.ui.theme.UberBlack
+import com.farewise.app.ui.theme.pressable
+import com.farewise.app.ui.theme.softCard
 
 /**
  * A single bookable ride quote, rendered as a card in the dashboard list.
@@ -67,28 +78,26 @@ fun RideOptionCard(
      * non-empty (≥ 2 points) a sparkline renders under the meta chips so the
      * rider can see the trend behind the surge banner.
      */
-    priceHistory: List<Double> = emptyList()
+    priceHistory: List<Double> = emptyList(),
+    /** Draw the sparkline in on first appearance (not on every re-entry). */
+    animateSparkline: Boolean = false
 ) {
-    val borderColor = if (isHero) MaterialTheme.colorScheme.primary else Color.Transparent
-    Card(
-        onClick = onClick,
+    val heroBorder by animateColorAsState(
+        targetValue = if (isHero) MaterialTheme.colorScheme.primary else Color.Transparent,
+        animationSpec = tween(Motion.STANDARD_MS, easing = Motion.EaseOut),
+        label = "heroBorder"
+    )
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .border(
-                width = if (isHero) 2.dp else 0.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(18.dp)
-            ),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .pressable(onClick = onClick)
+            .softCard()
+            .border(1.5.dp, heroBorder, CardShape)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             ProviderAvatar(provider = option.provider, tier = option.serviceTier)
@@ -104,9 +113,14 @@ fun RideOptionCard(
                         ),
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    if (isHero) {
-                        Spacer(Modifier.width(6.dp))
-                        HeroTag()
+                    AnimatedVisibility(
+                        visible = isHero,
+                        enter = fadeIn(Motion.enter()) +
+                            scaleIn(Motion.enter(), initialScale = 0.9f),
+                        exit = fadeOut(Motion.exit()) +
+                            scaleOut(Motion.exit(), targetScale = 0.9f)
+                    ) {
+                        HeroTag(Modifier.padding(start = 6.dp))
                     }
                 }
                 Spacer(Modifier.height(4.dp))
@@ -125,6 +139,7 @@ fun RideOptionCard(
                     Spacer(Modifier.height(6.dp))
                     PriceSparkline(
                         prices = priceHistory,
+                        animateIn = animateSparkline,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -138,11 +153,9 @@ fun RideOptionCard(
             Spacer(Modifier.width(10.dp))
 
             Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = Formatters.inr(option.priceInr),
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
+                RollingPrice(
+                    amountInr = option.priceInr,
+                    style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 option.fareEstimate?.takeIf { it.hasMeaningfulBand }?.let { est ->
@@ -183,7 +196,7 @@ private fun ProviderAvatar(provider: RideProvider, tier: String) {
     }
     Box(
         modifier = Modifier
-            .size(44.dp)
+            .size(46.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(bg),
         contentAlignment = Alignment.Center
@@ -216,8 +229,9 @@ private fun MetaChip(icon: ImageVector, text: String) {
 }
 
 @Composable
-private fun HeroTag() {
+private fun HeroTag(modifier: Modifier = Modifier) {
     Surface(
+        modifier = modifier,
         color = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary,
         shape = RoundedCornerShape(50)

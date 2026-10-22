@@ -1,7 +1,12 @@
 package com.farewise.app.ui.dashboard.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,18 +24,25 @@ import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.farewise.app.ui.common.Place
+import com.farewise.app.ui.theme.Motion
+import com.farewise.app.ui.theme.pressable
+import com.farewise.app.ui.theme.softCard
 
 /**
  * Pill-shaped search bar with two rows — source and destination — and a
@@ -49,13 +61,7 @@ fun LocationSearchBar(
     onSwapClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 3.dp,
-        shadowElevation = 6.dp
-    ) {
+    Box(modifier = modifier.fillMaxWidth().softCard()) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -94,7 +100,7 @@ private fun LocationRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .pressable(pressedScale = 0.98f, onClick = onClick)
             .padding(vertical = 8.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -111,13 +117,24 @@ private fun LocationRow(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            // Crossfade with a slight scale when the place changes (pick or swap).
+            AnimatedContent(
+                targetState = value,
+                transitionSpec = {
+                    (fadeIn(Motion.enter()) + scaleIn(Motion.enter(), initialScale = 0.96f)) togetherWith
+                        fadeOut(Motion.exit(120))
+                },
+                contentAlignment = Alignment.CenterStart,
+                label = "placeLabel"
+            ) { label ->
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
@@ -136,19 +153,34 @@ private fun Connector() {
     }
 }
 
+/**
+ * Each tap spins the arrows half a turn with a little overshoot — the icon
+ * itself shows that the two ends just traded places.
+ */
 @Composable
 private fun SwapButton(onClick: () -> Unit) {
-    Surface(
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        tonalElevation = 0.dp
+    var turns by remember { mutableIntStateOf(0) }
+    val rotation by animateFloatAsState(
+        targetValue = turns * 180f,
+        animationSpec = Motion.playful(),
+        label = "swapRotation"
+    )
+    Box(
+        modifier = Modifier
+            .size(42.dp)
+            .pressable(pressedScale = 0.9f) {
+                turns++
+                onClick()
+            }
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primaryContainer),
+        contentAlignment = Alignment.Center
     ) {
-        IconButton(onClick = onClick, modifier = Modifier.size(40.dp)) {
-            Icon(
-                imageVector = Icons.Filled.SwapVert,
-                contentDescription = "Swap origin and destination",
-                tint = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-        }
+        Icon(
+            imageVector = Icons.Filled.SwapVert,
+            contentDescription = "Swap origin and destination",
+            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.graphicsLayer { rotationZ = rotation }
+        )
     }
 }
